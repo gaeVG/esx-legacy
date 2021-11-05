@@ -62,13 +62,18 @@ AddEventHandler('esx:playerLoaded', function(xPlayer, isNew, skin)
 		end
 
 		local jobTpl = '<div>{{job_label}}{{grade_label}}</div>'
+		local job2Tpl = '<div>{{job2_label}}{{grade2_label}}</div>'
 
 		local gradeLabel = ESX.PlayerData.job.grade_label ~= ESX.PlayerData.job.label and ESX.PlayerData.job.grade_label or ''
+		local grade2Label = ESX.PlayerData.job2.grade_label ~= ESX.PlayerData.job2.label and ESX.PlayerData.job2.grade_label or ''
 		if gradeLabel ~= '' then gradeLabel = ' - '..gradeLabel end
+		if grade2Label ~= '' then grade2Label = ' - '..grade2Label end
 		
 		ESX.UI.HUD.RegisterElement('job', #ESX.PlayerData.accounts, 0, jobTpl, {
 			job_label = ESX.PlayerData.job.label,
 			grade_label = gradeLabel
+			job2_label = ESX.PlayerData.job2.label,
+			grade2_label = grade2Label
 		})
 	end
 	StartServerSyncLoops()
@@ -231,6 +236,19 @@ AddEventHandler('esx:setJob', function(Job)
 		})
 	end
 	ESX.SetPlayerData('job', Job)
+end)
+
+RegisterNetEvent('esx:setJob2')
+AddEventHandler('esx:setJob2', function(Job)
+	if Config.EnableHud then
+		local gradeLabel = Job.grade_label ~= Job.label and Job.grade_label or ''
+		if gradeLabel ~= '' then gradeLabel = ' - '..gradeLabel end
+		ESX.UI.HUD.UpdateElement('job2', {
+			job_label = Job.label,
+			grade_label = gradeLabel
+		})
+	end
+	ESX.SetPlayerData('job2', Job)
 end)
 
 RegisterNetEvent('esx:spawnVehicle')

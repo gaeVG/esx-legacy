@@ -3,7 +3,7 @@ Citizen.CreateThread(function()
 	SetMapName('San Andreas')
 	SetGameType('ESX Legacy')
 	
-	local query = '`accounts`, `job`, `job_grade`, `group`, `position`, `inventory`, `skin`, `loadout`' -- Select these fields from the database
+	local query = '`accounts`, `job`, `job_grade`, `job2`, `job2_grade`, `group`, `position`, `inventory`, `skin`, `loadout`' -- Select these fields from the database
 	if Config.Multichar or Config.Identity then	-- append these fields to the select query
 		query = query..', `firstname`, `lastname`, `dateofbirth`, `sex`, `height`'
 	end
@@ -124,6 +124,7 @@ function loadESXPlayer(identifier, playerId, isNew)
 		accounts = {},
 		inventory = {},
 		job = {},
+		job2 = {},
 		loadout = {},
 		playerName = GetPlayerName(playerId),
 		weight = 0
@@ -133,6 +134,7 @@ function loadESXPlayer(identifier, playerId, isNew)
 		MySQL.Async.fetchAll(LoadPlayer, { identifier
 		}, function(result)
 			local job, grade, jobObject, gradeObject = result[1].job, tostring(result[1].job_grade)
+			local job2, grade2, job2Object, grade2Object = result[1].job2, tostring(result[1].job2_grade)
 			local foundAccounts, foundItems = {}, {}
 
 			-- Accounts
@@ -175,6 +177,45 @@ function loadESXPlayer(identifier, playerId, isNew)
 
 			if gradeObject.skin_male then userData.job.skin_male = json.decode(gradeObject.skin_male) end
 			if gradeObject.skin_female then userData.job.skin_female = json.decode(gradeObject.skin_female) end
+
+			-- Inventory
+			if result[1].inventory and result[1].inventory ~= '' then
+				local inventory = json.decode(result[1].inventory)
+
+				for name,count in pairs(inventory) do
+					local item = ESX.Items[name]
+
+					if item then
+						foundItems[name] = count
+					else
+						print(('[^3WARNING^7] Ignoring invalid item "%s" for "%s"'):format(name, identifier))
+					end
+				end
+			end
+
+			-- Job2
+			if ESX.DoesJobExist(job2, grade2) then
+				job2Object, grade2Object = ESX.Jobs[job2], ESX.Jobs[job2].grades[grade2]
+			else
+				print(('[^3WARNING^7] Ignoring invalid job for %s [job: %s, grade: %s]'):format(identifier, job2, grade2))
+				job2, grade2 = 'unemployed', '0'
+				job2Object, grade2Object = ESX.Jobs[job2], ESX.Jobs[job2].grades[grade2]
+			end
+
+			userData.job2.id = job2Object.id
+			userData.job2.name = job2Object.name
+			userData.job2.label = job2Object.label
+
+			userData.job2.grade = tonumber(grade)
+			userData.job2.grade_name = grade2Object.name
+			userData.job2.grade_label = grade2Object.label
+			userData.job2.grade_salary = grade2Object.salary
+
+			userData.job2.skin_male = {}
+			userData.job2.skin_female = {}
+
+			if grade2Object.skin_male then userData.job2.skin_male = json.decode(grade2Object.skin_male) end
+			if grade2Object.skin_female then userData.job2.skin_female = json.decode(grade2Object.skin_female) end
 
 			-- Inventory
 			if result[1].inventory and result[1].inventory ~= '' then
@@ -273,7 +314,7 @@ function loadESXPlayer(identifier, playerId, isNew)
 	end)
 
 	Async.parallel(tasks, function(results)
-		local xPlayer = CreateExtendedPlayer(playerId, identifier, userData.group, userData.accounts, userData.inventory, userData.weight, userData.job, userData.loadout, userData.playerName, userData.coords)
+		local xPlayer = CreateExtendedPlayer(playerId, identifier, userData.group, userData.accounts, userData.inventory, userData.weight, userData.job, userData.job2, userData.loadout, userData.playerName, userData.coords)
 		ESX.Players[playerId] = xPlayer
 
 		if userData.firstname then 
@@ -292,6 +333,7 @@ function loadESXPlayer(identifier, playerId, isNew)
 			identifier = xPlayer.getIdentifier(),
 			inventory = xPlayer.getInventory(),
 			job = xPlayer.getJob(),
+			job2 = xPlayer.getJob2(),
 			loadout = xPlayer.getLoadout(),
 			maxWeight = xPlayer.getMaxWeight(),
 			money = xPlayer.getMoney(),
@@ -554,6 +596,7 @@ ESX.RegisterServerCallback('esx:getPlayerData', function(source, cb)
 		accounts     = xPlayer.getAccounts(),
 		inventory    = xPlayer.getInventory(),
 		job          = xPlayer.getJob(),
+		job2          = xPlayer.getJob2(),
 		loadout      = xPlayer.getLoadout(),
 		money        = xPlayer.getMoney()
 	})
@@ -567,6 +610,7 @@ ESX.RegisterServerCallback('esx:getOtherPlayerData', function(source, cb, target
 		accounts     = xPlayer.getAccounts(),
 		inventory    = xPlayer.getInventory(),
 		job          = xPlayer.getJob(),
+		job2          = xPlayer.getJob2(),
 		loadout      = xPlayer.getLoadout(),
 		money        = xPlayer.getMoney()
 	})
