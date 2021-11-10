@@ -203,7 +203,7 @@ ESX.SavePlayers = function(cb)
 		local time = os.time()
 
 		local selectListWithNames = "SELECT '%s' AS identifier, '%s' AS new_accounts, '%s' AS new_job, %s AS new_job_grade, '%s' AS new_job2, %s AS new_job2_grade, '%s' AS new_group, '%s' AS new_loadout, '%s' AS new_position, '%s' AS new_inventory "
-		local selectListNoNames = "SELECT '%s', '%s', '%s' , %s, '%s', '%s', '%s', '%s' "
+		local selectListNoNames = "SELECT '%s', '%s', '%s' , %s, '%s', '%s' ,'%s', '%s', '%s', '%s' "
 
 		local updateCommand = 'UPDATE users u JOIN ('
 
@@ -232,7 +232,7 @@ ESX.SavePlayers = function(cb)
 			first = false
 		end
 
-		updateCommand = updateCommand .. ' ) vals ON u.identifier = vals.identifier SET accounts = new_accounts, job = new_job, job_grade = new_job_grade, job2 = new_job2, job2_grade = new_job2_grade, `group` = new_group, loadout = new_loadout, `position` = new_position, inventory = new_inventory'
+		updateCommand = updateCommand .. ' ) vals ON u.identifier = vals.identifier SET accounts = new_accounts, job = new_job, job_grade = new_job_grade,  job2 = new_job2, job2_grade = new_job2_grade, `group` = new_group, loadout = new_loadout, `position` = new_position, inventory = new_inventory'
 
 		MySQL.Async.fetchAll(updateCommand, {},
 		function(result)
@@ -257,7 +257,7 @@ ESX.GetExtendedPlayers = function(key, val)
 	local xPlayers = {}
 	for k, v in pairs(ESX.Players) do
 		if key then
-			if ( (key == 'job' and v.job.name == val) and (key == 'job2' and v.job2.name == val) )  or v[key] == val then
+			if ((key == 'job' and v.job.name == val) or (key == 'job2' and v.job2.name == val)) or v[key] == val then
 				table.insert(xPlayers, v)
 			end
 		else
